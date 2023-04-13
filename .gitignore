@@ -1,0 +1,7 @@
+__pycache__/
+
+myapi.db
+
+migrations
+
+alembic.ini
