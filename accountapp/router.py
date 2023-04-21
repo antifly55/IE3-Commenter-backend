@@ -29,7 +29,7 @@ def signup(user_info: schema.UserCreateSchema):
                             detail="user already exists")
     
     with conn.cursor() as db:
-        db.execute(f'INSERT INTO USER (user_id, password_hash, nickname, email) VALUES ({user_id}, {password_hash}, {nickname}, {email})')
+        db.execute(f'INSERT INTO ACCOUNT (user_id, password_hash, nickname, email) VALUES ({user_id}, {password_hash}, {nickname}, {email})')
         db.commit()
 
 @router.post("/login", status_code=status.HTTP_200_OK)
@@ -39,21 +39,27 @@ def login(user_info: schema.UserLoginSchema):
     password_hash = pwd_context.hash(user_info.password)
 
     with conn.cursor() as db:
-        db.execute(f'SELECT * FROM ACCOUNT WHERE id={user_id} AND password_hash={password_hash}')
+        db.execute(f'SELECT (user_id, password_hash, nickname, email) FROM ACCOUNT WHERE id={user_id} AND password_hash={password_hash}')
         rows = db.fetchall()
     
     if not len(rows):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="invalid ID or PW")
     
+    row = rows[0]
+    nickname = row[2]
+    email = row[3]
+
     access_token = genAccessToken({
         'user_id': user_id,
-        'password_hash': password_hash
+        'password_hash': password_hash,
+        'nickname': nickname,
+        'email': email,
     })
     refresh_token = genRefreshToken()
 
     with conn.cursor() as db:
-        db.execute(f'UPDATE USER SET refresh_token={refresh_token} WHERE user_id={user_id}')
+        db.execute(f'UPDATE ACCOUNT SET refresh_token={refresh_token} WHERE user_id={user_id}')
         db.commit()
 
     # cookie로 리프레시 토큰 전송
@@ -69,19 +75,50 @@ def logout(user_info: schema.UserLogoutSchema):
     refresh_token = user_info.refresh_token
 
     with conn.cursor() as db:
-        db.execute(f'UPDATE USER SET refresh_token=NULL WHERE refresh_token={refresh_token}')
+        db.execute(f'UPDATE ACCOUNT SET refresh_token=NULL WHERE refresh_token={refresh_token}')
         db.commit()
 
     return {
         'detail': 'logout success'
     }
 
-@router.post("/update")
+@router.post("/refresh", status_code=status.HTTP_200_OK)
+def refresh():
+    # cookie에서 refresh token 가져옴
+    refresh_token = ''
+
+    with conn.cursor() as db:
+        db.execute(f'SELECT (user_id, password_hash, nickname, email) FROM ACCOUNT WHERE refresh_token={refresh_token}')
+        rows = db.fetchall()
+
+    if not len(rows):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="invalid refresh token")
+    
+    row = rows[0]
+    user_id = row[0]
+    password_hash = row[1]
+    nickname = row[2]
+    email = row[3]
+
+    access_token = genAccessToken({
+        'user_id': user_id,
+        'password_hash': password_hash,
+        'nickname': nickname,
+        'email': email,
+    })
+    refresh_token = genRefreshToken()
+
+    with conn.cursor() as db:
+        db.execute(f'UPDATE ACCOUNT SET refresh_token={refresh_token} WHERE user_id={user_id}')
+        db.commit()
+    
+    return {
+        'access_token': access_token,
+        'detail': 'login success'
+    }
+
+@router.put("/update")
 def update():
     # 비밀번호와 이메일 바꾸는 기능
-    pass
-
-@router.post("/refresh")
-def refresh():
-    # refresh token 갱신
     pass
