@@ -2,19 +2,27 @@ from pydantic import BaseModel, validator, EmailStr
 
 
 class UserCreateSchema(BaseModel):
-    username: str
-    password1: str
-    password2: str
+    user_id: str
+    password: str
+    password_val: str
+    nickname: str
     email: EmailStr
 
-    @validator('username', 'password1', 'password2', 'email')
+    @validator('user_id', 'password', 'password_val', 'nickname', 'email')
     def not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError('빈 값은 허용되지 않습니다.')
         return v
 
-    @validator('password2')
+    @validator('password_val')
     def passwords_match(cls, v, values):
-        if 'password1' in values and v != values['password1']:
+        if v != values['password']:
             raise ValueError('비밀번호가 일치하지 않습니다')
         return v
+    
+class UserLoginSchema(BaseModel):
+    user_id: str
+    password: str
+
+class UserLogoutSchema(BaseModel):
+    refresh_token: str

@@ -5,3 +5,7 @@ myapi.db
 migrations
 
 alembic.ini
+
+venv
+
+config.ini

@@ -1,20 +1,15 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+import pymysql
+import configparser
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./myapi.db"
+config = configparser.ConfigParser()
+config.read('config.ini')
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+db_info = config['DB']
+
+conn = pymysql.connect(
+    host=db_info['HOST'],
+    user=db_info['USER'],
+    password=db_info['PASSWORD'],
+    db=db_info['DB'],
+    charset='utf8'
 )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
