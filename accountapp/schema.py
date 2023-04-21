@@ -1,6 +1,5 @@
 from pydantic import BaseModel, validator, EmailStr
 
-
 class UserCreateSchema(BaseModel):
     user_id: str
     password: str
@@ -25,4 +24,14 @@ class UserLoginSchema(BaseModel):
     password: str
 
 class UserLogoutSchema(BaseModel):
+    refresh_token: str
+
+class UserUpdateSchema(BaseModel):
+    password_prev: str
+    password: str
+    password_val: str
+    nickname: str
+    email: EmailStr
+
+class UserRefreshSchema(BaseModel):
     refresh_token: str
