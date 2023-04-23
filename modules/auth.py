@@ -1,5 +1,15 @@
+import jwt
+import random
+import configparser
+
+config = configparser.ConfigParser()
+config.read('config.ini')
+
 def genAccessToken(items):
-    pass
+    token = jwt.encode(items, config['TOKENSECRET'], config['ACCESS'])
+    return token
 
 def genRefreshToken():
-    pass
+    # TODO: change token create method
+    token = random.randint(0, 2**256)
+    return token
