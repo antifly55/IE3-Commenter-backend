@@ -11,5 +11,5 @@ def genAccessToken(items):
 
 def genRefreshToken():
     # TODO: change token create method
-    token = random.randint(0, 2**256)
+    token = str(random.randint(0, 2**256))
     return token

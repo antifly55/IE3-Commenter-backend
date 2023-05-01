@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Response, Request
 from passlib.context import CryptContext
 
 from modules.auth import genAccessToken, genRefreshToken
@@ -33,7 +33,7 @@ def signup(user_info: schema.UserCreateSchema):
         db.commit()
 
 @router.post("/login", status_code=status.HTTP_200_OK)
-def login(user_info: schema.UserLoginSchema):
+def login(user_info: schema.UserLoginSchema, response: Response):
 
     user_id = user_info.user_id
     password_hash = pwd_context.hash(user_info.password)
@@ -62,7 +62,7 @@ def login(user_info: schema.UserLoginSchema):
         db.execute(f'UPDATE ACCOUNT SET refresh_token={refresh_token} WHERE user_id={user_id}')
         db.commit()
 
-    # cookie로 리프레시 토큰 전송
+    response.set_cookie(key="ie3-refresh-token", value=refresh_token)
     
     return {
         'access_token': access_token,
@@ -83,9 +83,8 @@ def logout(user_info: schema.UserLogoutSchema):
     }
 
 @router.post("/refresh", status_code=status.HTTP_200_OK)
-def refresh():
-    # cookie에서 refresh token 가져옴
-    refresh_token = ''
+def refresh(request: Request):
+    refresh_token = request.cookies.get('ie3-refresh-token')
 
     with conn.cursor() as db:
         db.execute(f'SELECT (user_id, password_hash, nickname, email) FROM ACCOUNT WHERE refresh_token={refresh_token}')
@@ -118,7 +117,7 @@ def refresh():
         'detail': 'login success'
     }
 
-@router.put("/update")
-def update():
-    # 비밀번호와 이메일 바꾸는 기능
-    pass
+# @router.put("/update")
+# def update():
+#     # 비밀번호와 이메일 바꾸는 기능
+#     pass
